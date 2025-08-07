@@ -1,0 +1,309 @@
+# Complete Backend API Documentation for Frontend Development
+
+## 🚀 Backend Overview
+This is a **Slack Message Scheduler** backend built with Node.js, Express, TypeScript, and MongoDB. It provides complete Slack integration with OAuth authentication, message scheduling, and an ultra-optimized scheduler service.
+
+**Base URL**: http://localhost:5000
+
+## 🔐 Authentication APIs
+
+### 1. Start OAuth Flow
+GET /api/auth/initiate
+
+Response:
+{
+  "authUrl": "https://slack.com/oauth/v2/authorize?client_id=...&user_scope=...&redirect_uri=..."
+}
+
+Usage: Redirect user to this URL to start Slack authentication.
+
+---
+
+### 2. OAuth Callback
+GET /api/auth/callback?code=AUTHORIZATION_CODE
+
+Response:
+{
+  "success": true,
+  "message": "Successfully connected to Slack",
+  "userId": "U09650HHQV8",
+  "hasTokenRotation": true
+}
+
+Usage: Handle the OAuth callback after user authorizes the app.
+
+---
+
+### 3. Exchange Tokens (for Token Rotation)
+POST /api/auth/exchange-tokens/U09650HHQV8
+
+Response:
+{
+  "success": true,
+  "message": "Successfully exchanged tokens for token rotation",
+  "expiresIn": 43200,
+  "expiresAt": "2024-01-07T10:30:00.000Z"
+}
+
+Usage: Convert long-lived tokens to rotatable tokens for better security.
+
+---
+
+### 4. Logout User
+DELETE /api/auth/logout/U09650HHQV8
+
+Response:
+{
+  "success": true,
+  "message": "User logged out successfully"
+}
+
+---
+
+## 📨 Message Management APIs
+
+### 5. Get User's Slack Channels
+GET /api/messages/channels/U09650HHQV8
+
+Response:
+{
+  "channels": [
+    {
+      "id": "C09650J3CSW",
+      "name": "all-new-workspace",
+      "is_channel": true,
+      "is_private": false,
+      "is_member": true,
+      "num_members": 1,
+      "topic": {
+        "value": "",
+        "creator": "",
+        "last_set": 0
+      },
+      "purpose": {
+        "value": "Share announcements and updates about company news...",
+        "creator": "U09650HHQV8",
+        "last_set": 1752691663
+      }
+    }
+  ]
+}
+
+---
+
+### 6. Send Immediate Message
+POST /api/messages/send/U09650HHQV8
+Content-Type: application/json
+
+Request Body:
+{
+  "channelId": "C09650J3CSW",
+  "message": "Hello from the API! This is a test message."
+}
+
+Response:
+{
+  "success": true,
+  "message": "Message sent successfully"
+}
+
+---
+
+### 7. Schedule a Message
+POST /api/messages/schedule/U09650HHQV8
+Content-Type: application/json
+
+Request Body:
+{
+  "channelId": "C09650J3CSW",
+  "channelName": "all-new-workspace",
+  "message": "This is a scheduled message!",
+  "scheduledFor": "2024-01-07T15:30:00.000Z"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Message scheduled successfully",
+  "scheduledMessage": {
+    "_id": "507f1f77bcf86cd799439011",
+    "userId": "507f1f77bcf86cd799439012",
+    "channelId": "C09650J3CSW",
+    "channelName": "all-new-workspace",
+    "message": "This is a scheduled message!",
+    "scheduledFor": "2024-01-07T15:30:00.000Z",
+    "sent": false,
+    "status": "pending",
+    "createdAt": "2024-01-07T10:15:00.000Z",
+    "updatedAt": "2024-01-07T10:15:00.000Z"
+  }
+}
+
+---
+
+### 8. Get User's Scheduled Messages
+GET /api/messages/scheduled/U09650HHQV8
+
+Response:
+{
+  "scheduledMessages": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "userId": "507f1f77bcf86cd799439012",
+      "channelId": "C09650J3CSW",
+      "channelName": "all-new-workspace",
+      "message": "This is a scheduled message!",
+      "scheduledFor": "2024-01-07T15:30:00.000Z",
+      "sent": false,
+      "status": "pending",
+      "createdAt": "2024-01-07T10:15:00.000Z",
+      "updatedAt": "2024-01-07T10:15:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439013",
+      "userId": "507f1f77bcf86cd799439012",
+      "channelId": "C09650J4N0J",
+      "channelName": "social",
+      "message": "Another scheduled message",
+      "scheduledFor": "2024-01-07T16:00:00.000Z",
+      "sent": true,
+      "sentAt": "2024-01-07T16:00:05.000Z",
+      "status": "sent",
+      "createdAt": "2024-01-07T10:20:00.000Z",
+      "updatedAt": "2024-01-07T16:00:05.000Z"
+    }
+  ]
+}
+
+---
+
+### 9. Cancel Scheduled Message
+DELETE /api/messages/scheduled/507f1f77bcf86cd799439011?userId=U09650HHQV8
+
+Response:
+{
+  "success": true,
+  "message": "Scheduled message cancelled"
+}
+
+---
+
+## 🚨 Error Responses
+
+### 400 Bad Request
+{
+  "error": "Channel ID and message are required"
+}
+
+### 403 Forbidden (Missing Slack Scopes)
+{
+  "error": "Slack app missing required permissions",
+  "details": "Missing required Slack scopes. Please ensure your Slack app has the following scopes: channels:read, groups:read, chat:write, chat:write.public, users:read.",
+  "solution": "Please update your Slack app OAuth scopes and reinstall the app"
+}
+
+### 404 Not Found
+{
+  "error": "User not found"
+}
+
+### 500 Internal Server Error
+{
+  "error": "Failed to send message"
+}
+
+---
+
+## 🔧 Technical Details
+
+### Authentication Flow
+1. User clicks "Connect with Slack" → Call /api/auth/initiate
+2. User authorizes on Slack → Redirected to /api/auth/callback
+3. Backend stores user tokens → Returns userId
+4. Use userId for all subsequent API calls
+
+### Token Rotation
+- Access tokens expire every 12 hours
+- System automatically refreshes tokens
+- Use /api/auth/exchange-tokens/:userId for existing users
+
+### Message Statuses
+- pending: Message scheduled, not sent yet
+- sent: Message successfully sent
+- failed: Message failed to send
+
+### Scheduler
+- Runs every minute automatically
+- Processes all scheduled messages in parallel
+- Ultra-optimized for high performance
+
+---
+
+## 🎨 Frontend Integration Tips
+
+### Required Environment Variables
+const API_BASE_URL = 'http://localhost:5000';
+const SLACK_CLIENT_ID = 'your-slack-client-id';
+
+### Authentication State Management
+// Store after OAuth callback
+const userState = {
+  userId: 'U09650HHQV8',
+  isAuthenticated: true,
+  hasTokenRotation: true
+};
+
+### API Call Examples
+
+// Get channels
+const channels = await fetch(`${API_BASE_URL}/api/messages/channels/${userId}`);
+
+// Schedule message
+const response = await fetch(`${API_BASE_URL}/api/messages/schedule/${userId}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    channelId: 'C09650J3CSW',
+    channelName: 'all-new-workspace',
+    message: 'Hello!',
+    scheduledFor: '2024-01-07T15:30:00.000Z'
+  })
+});
+
+### Real-time Updates
+- Poll /api/messages/scheduled/:userId every 30 seconds
+- Check message status changes
+- Update UI accordingly
+
+---
+
+## 🚀 Ready for Frontend Development
+
+This backend provides everything needed for a complete Slack message scheduling application:
+✅ Complete OAuth authentication
+✅ Channel management
+✅ Message scheduling and sending
+✅ Real-time scheduler
+✅ Error handling
+✅ Production-ready performance
+
+The backend is fully functional and ready for frontend integration!
+
+---
+
+## 📋 Complete API Endpoints Summary
+
+Authentication Routes (/api/auth):
+- GET /initiate - Start OAuth flow
+- GET /callback - Handle OAuth callback
+- POST /exchange-tokens/:userId - Exchange tokens for rotation
+- DELETE /logout/:userId - Logout user
+
+Message Routes (/api/messages):
+- GET /channels/:userId - Get user's channels
+- POST /send/:userId - Send immediate message
+- POST /schedule/:userId - Schedule a message
+- GET /scheduled/:userId - Get user's scheduled messages
+- DELETE /scheduled/:messageId - Cancel scheduled message
+
+Total: 9 API endpoints for complete functionality. 

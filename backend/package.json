@@ -1,0 +1,32 @@
+{
+  "name": "slack-connect-server",
+  "version": "1.0.0",
+  "description": "Slack Connect Backend API",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "axios": "^1.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2",
+    "express-session": "^1.17.3",
+    "helmet": "^7.0.0",
+    "mongoose": "^7.5.0",
+    "node-cron": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.17",
+    "@types/express-session": "^1.17.7",
+    "@types/node": "^20.5.0",
+    "@types/node-cron": "^3.0.7",
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  }
+}
