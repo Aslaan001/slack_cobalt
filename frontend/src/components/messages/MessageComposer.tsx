@@ -60,9 +60,13 @@ export const MessageComposer: React.FC = () => {
     }
   };
 
+  // const handleScheduledForChange = (value: string) => {
+  //   setScheduledFor(value);
+  // };
+
   const handleScheduledForChange = (value: string) => {
-    setScheduledFor(value);
-  };
+  setScheduledFor(value);
+};
 
   const isFormValid = selectedChannelId && message.trim();
   
@@ -110,13 +114,13 @@ export const MessageComposer: React.FC = () => {
         {isScheduling && (
           <div className="space-y-2">
             <Input
-              label="Schedule For"
-              type="datetime-local"
-              value={scheduledFor}
-              onChange={handleScheduledForChange}
-              required
-              min={getMinDateTime()}
-            />
+  label="Schedule For"
+  type="datetime-local"
+  value={scheduledFor}
+  onChange={handleScheduledForChange} // ✅ fix here
+  required
+  min={getMinDateTime()}
+/>
             {scheduledFor && !isScheduledTimeValid() && (
               <p className="text-sm text-red-600">
                 Please select a future date and time
