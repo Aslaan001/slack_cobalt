@@ -30,7 +30,7 @@ export const MessageComposer: React.FC = () => {
         channelId: selectedChannelId,
         message: message.trim(),
       });
-      
+
       setMessage('');
       setSelectedChannelId('');
       setSelectedChannelName('');
@@ -43,13 +43,17 @@ export const MessageComposer: React.FC = () => {
     if (!selectedChannelId || !message.trim() || !scheduledFor) return;
 
     try {
+      // Convert local datetime to UTC for backend
+      const localDate = new Date(scheduledFor);
+      const utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+
       await scheduleMessageMutation.mutateAsync({
         channelId: selectedChannelId,
         channelName: selectedChannelName,
         message: message.trim(),
-        scheduledFor,
+        scheduledFor: utcDate.toISOString(), // send UTC ISO
       });
-      
+
       setMessage('');
       setSelectedChannelId('');
       setSelectedChannelName('');
@@ -60,34 +64,28 @@ export const MessageComposer: React.FC = () => {
     }
   };
 
-  // const handleScheduledForChange = (value: string) => {
-  //   setScheduledFor(value);
-  // };
-
+  // ✅ matches your Textarea/Input prop type `(value: string) => void`
   const handleScheduledForChange = (value: string) => {
-  setScheduledFor(value);
-};
+    setScheduledFor(value);
+  };
 
   const isFormValid = selectedChannelId && message.trim();
-  
-  // Improved validation for scheduled time
+
   const isScheduledTimeValid = () => {
     if (!scheduledFor || scheduledFor.trim() === '') return false;
-    
-    const scheduledDate = new Date(scheduledFor);
-    const now = new Date();
-    
-    // Check if the date is valid and in the future
-    return !isNaN(scheduledDate.getTime()) && scheduledDate > now;
+
+    const selectedLocalDate = new Date(scheduledFor);
+    const nowLocal = new Date();
+
+    return selectedLocalDate.getTime() > nowLocal.getTime();
   };
-  
+
   const isScheduleValid = isFormValid && isScheduledTimeValid();
 
-  // Get minimum datetime for the input (current time + 1 minute)
   const getMinDateTime = () => {
     const now = new Date();
-    now.setMinutes(now.getMinutes() + 1); // Add 1 minute to current time
-    return now.toISOString().slice(0, 16); // Format for datetime-local input
+    now.setMinutes(now.getMinutes() + 1);
+    return now.toISOString().slice(0, 16);
   };
 
   return (
@@ -105,7 +103,7 @@ export const MessageComposer: React.FC = () => {
           label="Message"
           placeholder="Type your message here..."
           value={message}
-          onChange={setMessage}
+          onChange={setMessage} // ✅ now matches (value: string) => void
           rows={4}
           maxLength={4000}
           required
@@ -114,13 +112,13 @@ export const MessageComposer: React.FC = () => {
         {isScheduling && (
           <div className="space-y-2">
             <Input
-  label="Schedule For"
-  type="datetime-local"
-  value={scheduledFor}
-  onChange={handleScheduledForChange} // ✅ fix here
-  required
-  min={getMinDateTime()}
-/>
+              label="Schedule For"
+              type="datetime-local"
+              value={scheduledFor}
+              onChange={handleScheduledForChange} // ✅ now matches (value: string) => void
+              required
+              min={getMinDateTime()}
+            />
             {scheduledFor && !isScheduledTimeValid() && (
               <p className="text-sm text-red-600">
                 Please select a future date and time
