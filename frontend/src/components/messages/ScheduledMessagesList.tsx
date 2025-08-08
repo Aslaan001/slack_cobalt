@@ -9,6 +9,15 @@ import { Select } from '../ui/Select';
 
 type FilterStatus = 'all' | 'pending' | 'sent' | 'failed';
 
+// ✅ Helper to always show IST time
+const formatToIST = (utcDateString: string) => {
+  return new Date(utcDateString).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+};
+
 export const ScheduledMessagesList: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const { data, isLoading, error } = useScheduledMessages(filterStatus);
@@ -103,7 +112,13 @@ export const ScheduledMessagesList: React.FC = () => {
           <div className="space-y-4">
             <AnimatePresence>
               {messages.map((message) => (
-                <MessageCard key={message._id} message={message} />
+                <MessageCard
+                  key={message._id}
+                  message={{
+                    ...message,
+                    scheduledFor: formatToIST(message.scheduledFor), // ✅ Always IST
+                  }}
+                />
               ))}
             </AnimatePresence>
           </div>
