@@ -43,15 +43,15 @@ export const MessageComposer: React.FC = () => {
     if (!selectedChannelId || !message.trim() || !scheduledFor) return;
 
     try {
-      // Convert local datetime to UTC for backend
-      const localDate = new Date(scheduledFor);
-      const utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+      // Force IST (+05:30) timezone regardless of browser setting
+      const [datePart, timePart] = scheduledFor.split('T');
+      const istDate = new Date(`${datePart}T${timePart}:00+05:30`);
 
       await scheduleMessageMutation.mutateAsync({
         channelId: selectedChannelId,
         channelName: selectedChannelName,
         message: message.trim(),
-        scheduledFor: utcDate.toISOString(), // send UTC ISO
+        scheduledFor: istDate.toISOString(), // send as UTC ISO string
       });
 
       setMessage('');
@@ -64,7 +64,6 @@ export const MessageComposer: React.FC = () => {
     }
   };
 
-  // ✅ matches your Textarea/Input prop type `(value: string) => void`
   const handleScheduledForChange = (value: string) => {
     setScheduledFor(value);
   };
@@ -74,18 +73,26 @@ export const MessageComposer: React.FC = () => {
   const isScheduledTimeValid = () => {
     if (!scheduledFor || scheduledFor.trim() === '') return false;
 
-    const selectedLocalDate = new Date(scheduledFor);
-    const nowLocal = new Date();
+    // Force compare in IST
+    const [datePart, timePart] = scheduledFor.split('T');
+    const selectedIST = new Date(`${datePart}T${timePart}:00+05:30`);
+    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
 
-    return selectedLocalDate.getTime() > nowLocal.getTime();
+    return selectedIST.getTime() > nowIST.getTime();
   };
 
   const isScheduleValid = isFormValid && isScheduledTimeValid();
 
   const getMinDateTime = () => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() + 1);
-    return now.toISOString().slice(0, 16);
+    // Force min date in IST
+    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    nowIST.setMinutes(nowIST.getMinutes() + 1);
+    const year = nowIST.getFullYear();
+    const month = String(nowIST.getMonth() + 1).padStart(2, '0');
+    const day = String(nowIST.getDate()).padStart(2, '0');
+    const hours = String(nowIST.getHours()).padStart(2, '0');
+    const minutes = String(nowIST.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (
@@ -103,7 +110,7 @@ export const MessageComposer: React.FC = () => {
           label="Message"
           placeholder="Type your message here..."
           value={message}
-          onChange={setMessage} // ✅ now matches (value: string) => void
+          onChange={setMessage}
           rows={4}
           maxLength={4000}
           required
@@ -115,13 +122,13 @@ export const MessageComposer: React.FC = () => {
               label="Schedule For"
               type="datetime-local"
               value={scheduledFor}
-              onChange={handleScheduledForChange} // ✅ now matches (value: string) => void
+              onChange={handleScheduledForChange}
               required
               min={getMinDateTime()}
             />
             {scheduledFor && !isScheduledTimeValid() && (
               <p className="text-sm text-red-600">
-                Please select a future date and time
+                Please select a future date and time (IST)
               </p>
             )}
           </div>
